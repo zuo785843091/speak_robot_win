@@ -1,0 +1,10 @@
+# -*- coding: utf-8 -*-
+alarm_day:1,  2, 3, 4, 5, 6, 7
+alarm_hour:8, 8, 8, 8, 8, 8, 8
+alarm_minute:30, 0, 0, 0, 0, 0, 30
+alarm_flag:1, 1, 1, 1, 1, 1, 1
+alarm_enable:1
+#闹铃类型：1：语音合成声音，2：MP3文件
+alarm_runing_type:1
+alarm_runing_tts:起床啦，太阳都啥屁股了
+alarm_runing_mp3:小懒猪
