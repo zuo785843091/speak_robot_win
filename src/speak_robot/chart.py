@@ -85,7 +85,7 @@ class dialogue(object):
                         time.sleep(1)
                     SYN7318.serial_tts(new_words, False)
     '''
-   
+    # 解析在线命令词
     def get_command_entry(self, word, dict_no):
         flag = False
         iat_state = -1
@@ -122,6 +122,7 @@ class dialogue(object):
             while True:
                 time.sleep(0.5)
                 real_words = input('Please enter words: ')
+                # 检测是否为命令词，如果是命令词，则解析命令
                 is_command, iat_state, command_id, entry_id = self.get_command_entry(real_words, self.dialogue_dict)
                 if is_command:
                     command_entry_q.put([iat_state, command_id, entry_id])

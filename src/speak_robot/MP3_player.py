@@ -17,7 +17,7 @@ class player(config_command):
             self.config_path = '../config/story_config'
             self.list_path = '../../syn7318_resource/02词典-点播.txt'
             self.file_path = 'E:/2-故事/'
-        self.play_index = int(self.get_config(self.config_path, 'play_index'))        
+        self.play_index = int(self.get_config(self.config_path, 'play_index'))
         self.play_mode = self.get_config(self.config_path, 'play_mode')
         self.play_list = self.get_list(self.list_path)
 
@@ -78,42 +78,46 @@ class player(config_command):
                 self.play_index = entry_id
                 self.play_flag = True
 
-    def play_mp3(self):
-        wart_for_complete = True
-        while True:
-            #print(self.config_path)
-            if self.play_statue == d_play_statue['play']:
-                if self.play_mode == '1': #顺序播放
-                    self.play_index += 1
-                    if self.play_index > self.total_file_num:
-                        self.play_index = 1
+    def play_mp3(self, error_q):
+        try:
+            wart_for_complete = True
+            while True:
+                #print(self.config_path)
+                if self.play_statue == d_play_statue['play']:
+                    if self.play_mode == '1': #顺序播放
+                        self.play_index += 1
+                        if self.play_index > self.total_file_num:
+                            self.play_index = 1
+                            self.play_flag = False
+                    elif self.play_mode == '2': #循环播放
+                        self.play_index = self.play_index % self.total_file_num + 1
+                    elif self.play_mode == '3': #随机播放
+                        self.play_index = random.randint(1, self.total_file_num)                    
+                    elif self.play_mode == '4': #单曲循环
+                        self.play_index = self.play_index
+                    elif self.play_mode == '5': #单曲模式
                         self.play_flag = False
-                elif self.play_mode == '2': #循环播放
-                    self.play_index = self.play_index % self.total_file_num + 1
-                elif self.play_mode == '3': #随机播放
-                    self.play_index = random.randint(1, self.total_file_num)                    
-                elif self.play_mode == '4': #单曲循环
-                    self.play_index = self.play_index
-                elif self.play_mode == '5': #单曲模式
-                    self.play_flag = False
-                #把index写入文件
-                self.set_config(self.config_path, 'play_index', self.play_index)
-                file_name = self.list[self.play_index - 1]
-                file_name = self.file_path + file_name + '.mp3'
-                logging.info(file_name)
-                #Wait for play complete
-                '''
-				if wart_for_complete:
-					while not GPIO.input(BUSY_KEY):
-						time.sleep(0.5)
-				'''
-
-                if wart_for_complete:
-                    while not SYN7318.is_idel_state:
-                        time.sleep(0.5)
-                        SYN7318.play_mp3(file_name, False)
-            time.sleep(2)
-
+                    #把index写入文件
+                    self.set_config(self.config_path, 'play_index', self.play_index)
+                    file_name = self.list[self.play_index - 1]
+                    file_name = self.file_path + file_name + '.mp3'
+                    logging.info(file_name)
+                    #Wait for play complete
+                    '''
+    				if wart_for_complete:
+    					while not GPIO.input(BUSY_KEY):
+    						time.sleep(0.5)
+    				'''
+    
+                    if wart_for_complete:
+                        while not SYN7318.is_idel_state:
+                            time.sleep(0.5)
+                            SYN7318.play_mp3(file_name, False)
+                time.sleep(2)
+        except BaseException as e:
+            error_q.put([e, 'mp3'])
+            logging.error('mp3 error: %s' %(e))
+            
     def set_play_mode(self, play_mode):
         self.play_mode = play_mode
         self.set_config(self, self.config_path, 'play_mode', self.play_mode)

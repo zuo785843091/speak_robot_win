@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*
+# 设置logging 格式和输出等级
 import logging
 #打印到文件
 logging.basicConfig(level=logging.DEBUG,

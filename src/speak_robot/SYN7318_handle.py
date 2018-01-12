@@ -1,8 +1,28 @@
 # -*- coding: utf-8 -*
 from SYN7318 import *
-import queue
 
-SYN7318_q = queue.Queue()
+SYN7318_dict = {'smart_home'	: 0x00,
+				'song'		  : 0x01, 
+				'story'		 : 0x02, 
+				'system'		: 0x03, 
+				'number'		: 0x04, 
+				'offline_chart' : 0x05}
+
+command_dict = {'no'				 : 0,
+				'yes'				: 1,
+				'stop'			   : 2,
+				'r2'				 : 3,
+				'reduce_vol'		 : 4,
+				'add_vol'			: 5,
+				'set_song'		   : 6,
+				'set_story'		  : 7,
+				'set_chart'		  : 8,
+				'r3'				 : 9,
+				'check_net'		  : 10,
+				'set_alarm'		  : 11,
+				'open_alarm'		 : 12,
+				'close_alarm'		: 13,
+				'stop_play'		  : 16}
 
 class SYN7318_call_back(object):
 	def __init__(self):
@@ -16,8 +36,9 @@ class SYN7318_call_back(object):
 		self.command_id = -1
 
 class SYN7318_handles(object):
-	def __init__(self, SYN7318_cb):
+	def __init__(self, SYN7318_cb, syn7318_q):
 		self.SYN7318_cb = SYN7318_cb
+		self.SYN7318_q = syn7318_q
 		
 	def get_entry_command_id(self, frame_data):
 		match_rate = frame_data[0]
@@ -43,8 +64,9 @@ class SYN7318_handles(object):
 			logging.warning('iat refused')
 		elif frame_command == IAT_ERROR:
 			logging.warning('iat error')
+		#start_iat(0x00)
 
-	def analysis_command_data(self, frame_command, frame_data):
+	def offline_command_analysis(self, frame_command, frame_data):
 		if frame_command == RECEIVE_SUCCEED:
 			self.SYN7318_cb.is_receive_succeed = True
 		elif frame_command == IDEL_STATE:
@@ -63,56 +85,65 @@ class SYN7318_handles(object):
 		elif frame_command == RECEIVE_FAILED:
 			self.SYN7318_cb.is_receive_succeed = False
 			logging.warning('receive_failed')
-		elif frame_command == IAT_WAKE_UP_STATE or frame_command == PLAY_MP3_STATE or frame_command == UPDATE_DICT_STATE or frame_command == TTS_STATE:
+		elif frame_command == IAT_WAKE_UP_STATE or \
+			 frame_command == PLAY_MP3_STATE or \
+			 frame_command == UPDATE_DICT_STATE or \
+			 frame_command == TTS_STATE:
 			self.SYN7318_cb.is_idel_state = False
-			set_idel_state(is_idel_state)
+			set_idel_state(self.SYN7318_cb.is_idel_state)
 		elif frame_command == INIT_SUCCEED:
 			self.SYN7318_cb.is_init_state = True
 			
-	def SYN7318_receive_status(self):
+	def receive_status(self, error_q):
 		is_frame_start = 1
 		is_frame_length = 2
 		is_frame_command = 3
 		is_frame_end = 4
 		frame_status = 0
 
-		while True:
-			count = ser.inWaiting()
-			if count  > 0:
-				recv = ser.read(count)
-				print('recv=', recv)
-				for i in range(0, count):
-					if recv[i] == ord('\xfc') and frame_status == 0:
-						frame_status = is_frame_start
-						frame_length_str = []
-						frame_data = []
-						continue
-					if frame_status == is_frame_start:
-						frame_length_str.append(recv[i])
-						if len(frame_length_str) >= 2:
-							frame_status = is_frame_length
-							frame_length = frame_length_str[0] * 256 + frame_length_str[1]
-						continue
-					elif frame_status == is_frame_length:
-						frame_command = recv[i]
-						if frame_length > 6:
+		try:
+			while True:
+				if not self.SYN7318_q.empty():
+					logging.info('syn7318_receive_status ending!')
+					break
+				count = ser.inWaiting()
+				if count  > 0:
+					recv = ser.read(count)
+					#print('recv=', recv)
+					for i in range(0, count):
+						if recv[i] == ord('\xfc') and frame_status == 0:
+							frame_status = is_frame_start
+							frame_length_str = []
+							frame_data = []
+							continue
+						if frame_status == is_frame_start:
+							frame_length_str.append(recv[i])
+							if len(frame_length_str) >= 2:
+								frame_status = is_frame_length
+								frame_length = frame_length_str[0] * 256 + frame_length_str[1]
+							continue
+						elif frame_status == is_frame_length:
+							frame_command = recv[i]
+							if frame_length > 6:
+								frame_status = 0
+								print('receive error!')
+								continue
+							elif frame_length > 1 and frame_length <= 6:
+								frame_status = is_frame_command
+								continue
+							elif frame_length == 1:
+								frame_status = is_frame_end
+						elif frame_status == is_frame_command:
+							frame_data.append(recv[i])
+							if len(frame_data) >= frame_length - 1:
+								frame_status = is_frame_end
+							else:
+								continue
+		
+						if frame_status == is_frame_end:
+							self.offline_command_analysis(frame_command, frame_data)
 							frame_status = 0
-							print('receive error!')
-							continue
-						elif frame_length > 1 and frame_length <= 6:
-							frame_status = is_frame_command
-							continue
-						elif frame_length == 1:						
-							frame_status = is_frame_end
-					elif frame_status == is_frame_command:
-						frame_data.append(recv[i])				
-						if len(frame_data) >= frame_length - 1:
-							frame_status = is_frame_end
-						else:
-							continue
-				
-					if frame_status == is_frame_end:
-						#SYN7318_q.put(frame_command, frame_data)
-						self.analysis_command_data(frame_command, frame_data)
-						frame_status = 0
-			time.sleep(0.01)
+				time.sleep(0.01)
+		except BaseException as e:
+			error_q.put([e, 'SYN7318'])
+			logging.error('SYN7318 error: %s' %(e))

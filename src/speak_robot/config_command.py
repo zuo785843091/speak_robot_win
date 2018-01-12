@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# 配置文件（config）读取与写入
 import re
 
 class config_command(object):

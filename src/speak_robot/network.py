@@ -1,25 +1,25 @@
 # -*- coding: utf-8 -*
 """
-常用网络命令的python封装
+Linux常用网络命令的python封装
 """
 import os
 import re
 import SYN7318
 
-
+# 检查是否能正常上网
 def check_network():
     net_status = os.system('ping www.baidu.com -n 1')    
     if net_status == 0:
         return True
     else:
         return False
-    
+# 检测网络状态
 def net_work_status():
     if check_network():
         SYN7318.serial_tts('恭喜你，网络顺畅')
     else:
         SYN7318.serial_tts('不好意思，网络没有接通哦')
-        
+
 def check_network_status():
     pass
 

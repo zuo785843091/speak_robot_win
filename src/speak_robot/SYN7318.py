@@ -14,7 +14,7 @@ GPIO.setup(BUSY_KEY, GPIO.IN, GPIO.PUD_UP)
 for comx in os.popen('ls /dev/ttyUSB*'):
     ser = serial.Serial(comx, 115200)
 '''
-ser = serial.Serial("COM6", 115200)
+ser = serial.Serial("COM3", 115200)
 ###############################SYN7318回传命令字定义############################
 #模块通用回传
 INIT_SUCCEED  = 0X41

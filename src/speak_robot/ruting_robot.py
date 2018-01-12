@@ -1,4 +1,9 @@
 # coding: utf-8
+
+'''
+图灵机器人接口
+'''
+
 import urllib.request
 import json
 

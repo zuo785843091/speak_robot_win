@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*
+# Email 命令解析
 import re
 import network
 import SYN7318

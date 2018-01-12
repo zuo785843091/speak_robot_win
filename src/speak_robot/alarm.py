@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
+# 闹钟设置
 from config_command import config_command
 import time
 import SYN7318
 import logging
 logging.basicConfig(level=logging.INFO)
 
-import queue
-alarm_q = queue.Queue()
 '''
 import smbus
 #/dev/i2c-1
@@ -109,7 +108,7 @@ class ds3231(object):
             return False
 '''
 class alarm(ds3231, config_command):
-    def __init__(self, dict_no):
+    def __init__(self, dict_no, alarm_q):
         ds3231.__init__(self)
         self.alarm_config_path = '../config/alarm_config'
         self.file_path = 'E:/3-闹铃/'
@@ -127,7 +126,7 @@ class alarm(ds3231, config_command):
         self.alarm_m = 0
         self.run_times = 1
         self.dict_no = dict_no
-        self.alarm_q = queue.Queue()
+        self.alarm_q = alarm_q
     
     def open_alarm(self):
         self.alarm_enable = 1
@@ -205,14 +204,14 @@ class alarm(ds3231, config_command):
 
     def check_alarm(self):
         self.get_local_time()
-        #print(self.alarm_hour[week_dict[self.weekday]], self.hour, self.alarm_minute[week_dict[self.weekday]], self.minute)
+        # print(self.alarm_hour[week_dict[self.weekday]], self.hour, self.alarm_minute[week_dict[self.weekday]], self.minute)
         '''
         self.ds3231ReadTime()
         '''
         hour_error = (self.time_tpye + (self.alarm_hour[week_dict[self.weekday]] - self.hour)) % self.time_tpye
         minute_error = hour_error * 60 + self.alarm_minute[week_dict[self.weekday]] - self.minute
         minute_error = (1440 + minute_error) % 1440
-        print(minute_error)
+        print('alarm rest minutes', minute_error)
         return minute_error
 
     def alarm_handle(self, error_q):
