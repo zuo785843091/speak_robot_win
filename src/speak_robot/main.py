@@ -9,6 +9,7 @@ import pi_email
 import chart
 from alarm import alarm
 
+# 主循环当前运行模式字典
 running_mode_dict = {'system_mode'       : 0,
                      'set_network'       : 1,
                      'set_alarm'         : 2,
@@ -58,26 +59,24 @@ def check_thread(error_q, oline_command_entry_q):
     
     
 try:
-    
+    #初始模式和词典，开机默认为系统设置模式
     current_run_mode = running_mode_dict['system_mode']
-    #初始词典
     current_dict_no = SYN7318_dict['system']
-    #创建在线聊天
+    
+    #创建各个对象实例
     chart_d  = chart.dialogue(current_dict_no)
     pi_sys   = pi_system.pi_system()
     mp3      = MP3_player.player(current_dict_no, 'song')
     pi_alarm = alarm(current_dict_no, alarm_q)
     syn7318_handle = SYN7318_handles(SYN7318_cb, syn7318_q)
-    # 打开SYN7318返回处理线程
+   
+    # 打开各处理线程
     receive_status_t      = pi_sys.start_thread(syn7318_handle.receive_status, error_q, 'receive_status_Thread')
-    # 打开 mp3 处理线程
     song_status_t         = pi_sys.start_thread(mp3.play_mp3, error_q, 'MP3_status_Thread')
-    # 打开 email 处理进程
     email_status_t        = pi_sys.start_thread(pi_email.receive_email_t, error_q, 'email_status_Thread')
-    # 打开 alarm 处理进程
     alarm_status_t        = pi_sys.start_thread(pi_alarm.alarm_handle, error_q, 'alarm_status_Thread')
-    # 打开 online_chart 处理进程
     online_chart_status_t = pi_sys.start_thread(chart_d.online_chart_mode, (error_q, oline_command_entry_q), 'online_chart_status_Thread')
+    
     #初始化机器人
     #robot_init(int(pi_sys.config_data['vol_level']), pi_sys.config_data['tts_name'])
     #初次开机设为唤醒模式
@@ -153,7 +152,7 @@ try:
             else:
                 pass
 
-            #set_alarm_mode()
+            # set_alarm_mode()
             if SYN7318_cb.iat_state == IAT_NO_ID_SUCCEED or SYN7318_cb.iat_state == IAT_ID_SUCCEED:
                 if current_run_mode == running_mode_dict['set_song']:                
                     mp3.mp3_play_mode(SYN7318_cb.command_id, SYN7318_cb.entry_id)
