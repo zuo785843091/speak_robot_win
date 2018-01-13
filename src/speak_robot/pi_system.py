@@ -10,7 +10,7 @@ class pi_system(config_command):
         self.config_data = self.get_all_config(self.sys_config_path)
         self.time = 0
         self.net_flag = network.check_network()
-    
+        self.auto_update_flag = self.Auto_update()
     
     def get_cpu_temperature(self):
         return 50
@@ -25,9 +25,20 @@ class pi_system(config_command):
         status_t.start()
         return status_t
     
+    def Auto_update(self):
+        if self.net_flag:
+            os.system('git pull')
+            print('git pull success!')
+            return True
+        else:
+            print('git pull failed!')
+            return False
+        
     def restart_program(self):
         python = sys.executable
         os.execl(python, python, * sys.argv)
+        
+        
 '''
 pi = pi_system()
 print(pi.config_data)

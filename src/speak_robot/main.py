@@ -57,8 +57,9 @@ def check_thread(error_q, oline_command_entry_q):
             logging.info('online_chart thread restarted')
             chart_status_t = pi_sys.start_thread(chart_d.online_chart_mode, (error_q, oline_command_entry_q), 'online_chart_status_Thread')
     
-    
+
 try:
+    
     #初始模式和词典，开机默认为系统设置模式
     current_run_mode = running_mode_dict['system_mode']
     current_dict_no = SYN7318_dict['system']
